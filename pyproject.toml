@@ -4,11 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ostrov-public-api"
-version = "0.1.0"
+version = "0.1.1"
 description = "HTTP client and MCP adapter for the public Ostrov retreat API"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 dependencies = []
+
+[project.urls]
+Homepage = "https://ostrov.center/developers"
+Repository = "https://github.com/iia-arg/ostrov-public-api"
+Documentation = "https://ostrov.center/api/public/v1/openapi.json"
 
 [project.scripts]
 ostrov-mcp = "ostrov_api.mcp:main"

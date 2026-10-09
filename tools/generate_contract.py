@@ -84,7 +84,7 @@ def deref(v):
   if '$ref'in v:return deref(schemas[v['$ref'].rsplit('/',1)[1]])
   return {k:deref(x)for k,x in v.items()}
  return v
-spec={'openapi':'3.1.0','info':{'title':'Ostrov public API','version':'0.1.0','description':'Public retreat information and indicative quotes. A saved estimate or accepted application never implies confirmed availability. Guest sessions authorize only their own documents. Human links are confidential bearer capabilities.'},'servers':[{'url':'https://ostrov.center/api/public/v1'}],'paths':paths,'components':{'securitySchemes':{'GuestSession':{'type':'http','scheme':'bearer','description':'Token from POST sessions. Never send in a URL. Expires after 30 days; signup and private center keys are not required.'}},'schemas':schemas}}
+spec={'openapi':'3.1.0','info':{'title':'Ostrov public API','version':'0.1.1','description':'Public retreat information and indicative quotes. A saved estimate or accepted application never implies confirmed availability. Guest sessions authorize only their own documents. Human links are confidential bearer capabilities.'},'servers':[{'url':'https://ostrov.center/api/public/v1'}],'paths':paths,'components':{'securitySchemes':{'GuestSession':{'type':'http','scheme':'bearer','description':'Token from POST sessions. Never send in a URL. Expires after 30 days; signup and private center keys are not required.'}},'schemas':schemas}}
 (ROOT/'openapi.json').write_text(json.dumps(spec,ensure_ascii=False,indent=2)+'\n')
 (ROOT/'ostrov_api/tools.json').write_text(json.dumps(deref(tools),ensure_ascii=False,indent=2)+'\n')
 print('Generated OpenAPI and MCP schemas')

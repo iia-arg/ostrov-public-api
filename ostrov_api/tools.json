@@ -1,0 +1,1325 @@
+[
+  {
+    "name": "get_center",
+    "description": "Public location and contact information.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    },
+    "_http": {
+      "path": "/center",
+      "method": "GET",
+      "private": false,
+      "write": false
+    }
+  },
+  {
+    "name": "get_catalog",
+    "description": "Current tariff version, resources and rules. Do not cache prices as permanent knowledge.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    },
+    "_http": {
+      "path": "/catalog",
+      "method": "GET",
+      "private": false,
+      "write": false
+    }
+  },
+  {
+    "name": "get_objects",
+    "description": "Current public resource descriptions and availability rules; no guarantee of open places.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    },
+    "_http": {
+      "path": "/objects",
+      "method": "GET",
+      "private": false,
+      "write": false
+    }
+  },
+  {
+    "name": "get_calendar",
+    "description": "Confirmed public activity; empty dates do not mean availability.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "string",
+          "format": "date",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "end": {
+          "type": "string",
+          "format": "date",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    },
+    "_http": {
+      "path": "/calendar",
+      "method": "GET",
+      "private": false,
+      "write": false
+    }
+  },
+  {
+    "name": "get_events",
+    "description": "Public programs and labeled demo data; contact the organizer to ask about joining.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    },
+    "_http": {
+      "path": "/events",
+      "method": "GET",
+      "private": false,
+      "write": false
+    }
+  },
+  {
+    "name": "calculate_quote",
+    "description": "Calculate without saving or contacting anyone. Check complete, warnings and availabilityStatus.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "group",
+            "biggroup",
+            "resident"
+          ]
+        },
+        "plan": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "arrival": {
+                  "type": "string",
+                  "format": "date",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "departure": {
+                  "type": "string",
+                  "format": "date",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "adults": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "youngChildrenAges": {
+                  "type": "array",
+                  "maxItems": 30,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "description": "Information only; does not change any guest count, accommodation, food or price."
+                },
+                "policyVersion": {
+                  "type": "integer",
+                  "const": 4
+                },
+                "teens": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "description": "Children eligible for the child discount (currently 6–12). Despite the field name, full-rate children (currently 13+) belong in adults. Check the live catalogue."
+                },
+                "team": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "description": "Adult organizers and team, separate from participants. Ordinary tariff charges the team fully; all-inclusive benefits are calculated by the server."
+                },
+                "youngChildren": {
+                  "type": "integer",
+                  "const": 0,
+                  "description": "Legacy counter kept at zero; use youngChildrenAges for information."
+                },
+                "organizer": {
+                  "type": "string",
+                  "maxLength": 100,
+                  "description": "Display name; required and nonempty when saving."
+                },
+                "title": {
+                  "type": "string",
+                  "maxLength": 150,
+                  "description": "Retreat name; required and nonempty when saving."
+                },
+                "housing": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "resource": {
+                        "type": "string",
+                        "maxLength": 100
+                      },
+                      "occupancy": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 3
+                      },
+                      "quantity": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 100
+                      }
+                    },
+                    "required": [
+                      "resource",
+                      "occupancy",
+                      "quantity"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "maxItems": 100
+                },
+                "activities": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "resource": {
+                        "type": "string",
+                        "maxLength": 100
+                      },
+                      "day": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 364
+                      },
+                      "slot": {
+                        "type": "string",
+                        "maxLength": 100
+                      },
+                      "options": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 100
+                        },
+                        "maxItems": 20
+                      }
+                    },
+                    "required": [
+                      "resource",
+                      "day",
+                      "slot",
+                      "options"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "maxItems": 2000
+                },
+                "food": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "policyVersion",
+                "arrival",
+                "departure",
+                "adults",
+                "teens",
+                "team",
+                "housing",
+                "activities",
+                "food"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "arrival": {
+                  "type": "string",
+                  "format": "date",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "departure": {
+                  "type": "string",
+                  "format": "date",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "adults": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 20
+                },
+                "youngChildrenAges": {
+                  "type": "array",
+                  "maxItems": 30,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "description": "Information only; does not change any guest count, accommodation, food or price."
+                },
+                "name": {
+                  "type": "string",
+                  "maxLength": 100,
+                  "description": "Required and nonempty when saving."
+                },
+                "children": {
+                  "type": "array",
+                  "maxItems": 20,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 6,
+                    "maximum": 17
+                  },
+                  "description": "Children counted in accommodation; current rules permit ages 6–17. Put younger ages in youngChildrenAges."
+                },
+                "housing": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 30,
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "resource": {
+                        "type": "string",
+                        "maxLength": 100
+                      },
+                      "occupancy": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 3
+                      }
+                    },
+                    "required": [
+                      "resource",
+                      "occupancy"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "bathVisits": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              },
+              "required": [
+                "arrival",
+                "departure",
+                "adults",
+                "children",
+                "housing",
+                "bathVisits"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "catalogVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000000
+        }
+      },
+      "required": [
+        "kind",
+        "plan"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    },
+    "_http": {
+      "path": "/quotes",
+      "method": "POST",
+      "private": false,
+      "write": false
+    }
+  },
+  {
+    "name": "suggest_group",
+    "description": "Suggest room/program selection for the ordinary group tariff; not an availability check.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "group"
+        },
+        "plan": {
+          "type": "object",
+          "properties": {
+            "arrival": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "departure": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "adults": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "youngChildrenAges": {
+              "type": "array",
+              "maxItems": 30,
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 5
+              },
+              "description": "Information only; does not change any guest count, accommodation, food or price."
+            },
+            "policyVersion": {
+              "type": "integer",
+              "const": 4
+            },
+            "teens": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Children eligible for the child discount (currently 6–12). Despite the field name, full-rate children (currently 13+) belong in adults. Check the live catalogue."
+            },
+            "team": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Adult organizers and team, separate from participants. Ordinary tariff charges the team fully; all-inclusive benefits are calculated by the server."
+            },
+            "youngChildren": {
+              "type": "integer",
+              "const": 0,
+              "description": "Legacy counter kept at zero; use youngChildrenAges for information."
+            },
+            "organizer": {
+              "type": "string",
+              "maxLength": 100,
+              "description": "Display name; required and nonempty when saving."
+            },
+            "title": {
+              "type": "string",
+              "maxLength": 150,
+              "description": "Retreat name; required and nonempty when saving."
+            },
+            "housing": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "resource": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "occupancy": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 3
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100
+                  }
+                },
+                "required": [
+                  "resource",
+                  "occupancy",
+                  "quantity"
+                ],
+                "additionalProperties": false
+              },
+              "maxItems": 100
+            },
+            "activities": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "resource": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "day": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 364
+                  },
+                  "slot": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "options": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 100
+                    },
+                    "maxItems": 20
+                  }
+                },
+                "required": [
+                  "resource",
+                  "day",
+                  "slot",
+                  "options"
+                ],
+                "additionalProperties": false
+              },
+              "maxItems": 2000
+            },
+            "food": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "policyVersion",
+            "arrival",
+            "departure",
+            "adults",
+            "teens",
+            "team",
+            "housing",
+            "activities",
+            "food"
+          ],
+          "additionalProperties": false
+        },
+        "catalogVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000000
+        }
+      },
+      "required": [
+        "kind",
+        "plan"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    },
+    "_http": {
+      "path": "/suggestions",
+      "method": "POST",
+      "private": false,
+      "write": false
+    }
+  },
+  {
+    "name": "save_estimate",
+    "description": "Save after explicit user request. Requires name/title. Confidential human link returned.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "group",
+            "biggroup",
+            "resident"
+          ]
+        },
+        "plan": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "arrival": {
+                  "type": "string",
+                  "format": "date",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "departure": {
+                  "type": "string",
+                  "format": "date",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "adults": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "youngChildrenAges": {
+                  "type": "array",
+                  "maxItems": 30,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "description": "Information only; does not change any guest count, accommodation, food or price."
+                },
+                "policyVersion": {
+                  "type": "integer",
+                  "const": 4
+                },
+                "teens": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "description": "Children eligible for the child discount (currently 6–12). Despite the field name, full-rate children (currently 13+) belong in adults. Check the live catalogue."
+                },
+                "team": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "description": "Adult organizers and team, separate from participants. Ordinary tariff charges the team fully; all-inclusive benefits are calculated by the server."
+                },
+                "youngChildren": {
+                  "type": "integer",
+                  "const": 0,
+                  "description": "Legacy counter kept at zero; use youngChildrenAges for information."
+                },
+                "organizer": {
+                  "type": "string",
+                  "maxLength": 100,
+                  "description": "Display name; required and nonempty when saving.",
+                  "minLength": 1
+                },
+                "title": {
+                  "type": "string",
+                  "maxLength": 150,
+                  "description": "Retreat name; required and nonempty when saving.",
+                  "minLength": 1
+                },
+                "housing": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "resource": {
+                        "type": "string",
+                        "maxLength": 100
+                      },
+                      "occupancy": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 3
+                      },
+                      "quantity": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 100
+                      }
+                    },
+                    "required": [
+                      "resource",
+                      "occupancy",
+                      "quantity"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "maxItems": 100
+                },
+                "activities": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "resource": {
+                        "type": "string",
+                        "maxLength": 100
+                      },
+                      "day": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 364
+                      },
+                      "slot": {
+                        "type": "string",
+                        "maxLength": 100
+                      },
+                      "options": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 100
+                        },
+                        "maxItems": 20
+                      }
+                    },
+                    "required": [
+                      "resource",
+                      "day",
+                      "slot",
+                      "options"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "maxItems": 2000
+                },
+                "food": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "policyVersion",
+                "arrival",
+                "departure",
+                "adults",
+                "teens",
+                "team",
+                "housing",
+                "activities",
+                "food",
+                "organizer",
+                "title"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "arrival": {
+                  "type": "string",
+                  "format": "date",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "departure": {
+                  "type": "string",
+                  "format": "date",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "adults": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 20
+                },
+                "youngChildrenAges": {
+                  "type": "array",
+                  "maxItems": 30,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "description": "Information only; does not change any guest count, accommodation, food or price."
+                },
+                "name": {
+                  "type": "string",
+                  "maxLength": 100,
+                  "description": "Required and nonempty when saving.",
+                  "minLength": 1
+                },
+                "children": {
+                  "type": "array",
+                  "maxItems": 20,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 6,
+                    "maximum": 17
+                  },
+                  "description": "Children counted in accommodation; current rules permit ages 6–17. Put younger ages in youngChildrenAges."
+                },
+                "housing": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 30,
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "resource": {
+                        "type": "string",
+                        "maxLength": 100
+                      },
+                      "occupancy": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 3
+                      }
+                    },
+                    "required": [
+                      "resource",
+                      "occupancy"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "bathVisits": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              },
+              "required": [
+                "arrival",
+                "departure",
+                "adults",
+                "children",
+                "housing",
+                "bathVisits",
+                "name"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "catalogVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000000
+        },
+        "requestKey": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]{16,120}$",
+          "description": "Unique key for one intended write; reuse exactly after an uncertain result. Use a new key for changed input."
+        },
+        "userConfirmed": {
+          "type": "boolean",
+          "const": true,
+          "description": "Set only after the person explicitly requests this action."
+        }
+      },
+      "required": [
+        "kind",
+        "plan",
+        "catalogVersion",
+        "requestKey",
+        "userConfirmed"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    },
+    "_http": {
+      "path": "/estimates",
+      "method": "POST",
+      "private": true,
+      "write": true
+    }
+  },
+  {
+    "name": "get_estimate",
+    "description": "Read only a document owned by this session.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "estimateId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{32}$"
+        }
+      },
+      "required": [
+        "estimateId"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    },
+    "_http": {
+      "path": "/estimates/{estimateId}",
+      "method": "GET",
+      "private": true,
+      "write": false
+    }
+  },
+  {
+    "name": "edit_estimate",
+    "description": "Edit an owned draft after explicit user request; stale versions conflict.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "plan": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "arrival": {
+                  "type": "string",
+                  "format": "date",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "departure": {
+                  "type": "string",
+                  "format": "date",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "adults": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "youngChildrenAges": {
+                  "type": "array",
+                  "maxItems": 30,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "description": "Information only; does not change any guest count, accommodation, food or price."
+                },
+                "policyVersion": {
+                  "type": "integer",
+                  "const": 4
+                },
+                "teens": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "description": "Children eligible for the child discount (currently 6–12). Despite the field name, full-rate children (currently 13+) belong in adults. Check the live catalogue."
+                },
+                "team": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "description": "Adult organizers and team, separate from participants. Ordinary tariff charges the team fully; all-inclusive benefits are calculated by the server."
+                },
+                "youngChildren": {
+                  "type": "integer",
+                  "const": 0,
+                  "description": "Legacy counter kept at zero; use youngChildrenAges for information."
+                },
+                "organizer": {
+                  "type": "string",
+                  "maxLength": 100,
+                  "description": "Display name; required and nonempty when saving.",
+                  "minLength": 1
+                },
+                "title": {
+                  "type": "string",
+                  "maxLength": 150,
+                  "description": "Retreat name; required and nonempty when saving.",
+                  "minLength": 1
+                },
+                "housing": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "resource": {
+                        "type": "string",
+                        "maxLength": 100
+                      },
+                      "occupancy": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 3
+                      },
+                      "quantity": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 100
+                      }
+                    },
+                    "required": [
+                      "resource",
+                      "occupancy",
+                      "quantity"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "maxItems": 100
+                },
+                "activities": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "resource": {
+                        "type": "string",
+                        "maxLength": 100
+                      },
+                      "day": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 364
+                      },
+                      "slot": {
+                        "type": "string",
+                        "maxLength": 100
+                      },
+                      "options": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 100
+                        },
+                        "maxItems": 20
+                      }
+                    },
+                    "required": [
+                      "resource",
+                      "day",
+                      "slot",
+                      "options"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "maxItems": 2000
+                },
+                "food": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "policyVersion",
+                "arrival",
+                "departure",
+                "adults",
+                "teens",
+                "team",
+                "housing",
+                "activities",
+                "food",
+                "organizer",
+                "title"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "arrival": {
+                  "type": "string",
+                  "format": "date",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "departure": {
+                  "type": "string",
+                  "format": "date",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "adults": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 20
+                },
+                "youngChildrenAges": {
+                  "type": "array",
+                  "maxItems": 30,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "description": "Information only; does not change any guest count, accommodation, food or price."
+                },
+                "name": {
+                  "type": "string",
+                  "maxLength": 100,
+                  "description": "Required and nonempty when saving.",
+                  "minLength": 1
+                },
+                "children": {
+                  "type": "array",
+                  "maxItems": 20,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 6,
+                    "maximum": 17
+                  },
+                  "description": "Children counted in accommodation; current rules permit ages 6–17. Put younger ages in youngChildrenAges."
+                },
+                "housing": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 30,
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "resource": {
+                        "type": "string",
+                        "maxLength": 100
+                      },
+                      "occupancy": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 3
+                      }
+                    },
+                    "required": [
+                      "resource",
+                      "occupancy"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "bathVisits": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              },
+              "required": [
+                "arrival",
+                "departure",
+                "adults",
+                "children",
+                "housing",
+                "bathVisits",
+                "name"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "catalogVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000000
+        },
+        "documentVersion": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "requestKey": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]{16,120}$",
+          "description": "Unique key for one intended write; reuse exactly after an uncertain result. Use a new key for changed input."
+        },
+        "userConfirmed": {
+          "type": "boolean",
+          "const": true,
+          "description": "Set only after the person explicitly requests this action."
+        },
+        "estimateId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{32}$"
+        }
+      },
+      "required": [
+        "plan",
+        "catalogVersion",
+        "documentVersion",
+        "requestKey",
+        "userConfirmed",
+        "estimateId"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": true
+    },
+    "_http": {
+      "path": "/estimates/{estimateId}/edit",
+      "method": "POST",
+      "private": true,
+      "write": true
+    }
+  },
+  {
+    "name": "submit_application",
+    "description": "Submit only after user confirmation and contact consent. This does not confirm a booking.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "catalogVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000000
+        },
+        "documentVersion": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "contactProfile": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "maxLength": 100
+            },
+            "phone": {
+              "type": "string",
+              "maxLength": 80
+            },
+            "email": {
+              "type": "string",
+              "maxLength": 254,
+              "format": "email"
+            },
+            "notes": {
+              "type": "string",
+              "maxLength": 4000
+            },
+            "messengers": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 8,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "telegram",
+                      "whatsapp",
+                      "max"
+                    ]
+                  },
+                  "username": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "userId": {
+                    "type": "string",
+                    "const": "",
+                    "description": "Typed contact is not authenticated identity; must be empty."
+                  }
+                },
+                "required": [
+                  "type",
+                  "username",
+                  "userId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "name",
+            "phone",
+            "email",
+            "notes",
+            "messengers"
+          ],
+          "additionalProperties": false
+        },
+        "requestKey": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]{16,120}$",
+          "description": "Unique key for one intended write; reuse exactly after an uncertain result. Use a new key for changed input."
+        },
+        "userConfirmed": {
+          "type": "boolean",
+          "const": true,
+          "description": "Set only after the person explicitly requests this action."
+        },
+        "consent": {
+          "type": "boolean",
+          "const": true,
+          "description": "Consent to submit contact information for handling this request."
+        },
+        "estimateId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{32}$"
+        }
+      },
+      "required": [
+        "catalogVersion",
+        "documentVersion",
+        "contactProfile",
+        "requestKey",
+        "userConfirmed",
+        "consent",
+        "estimateId"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    },
+    "_http": {
+      "path": "/estimates/{estimateId}/applications",
+      "method": "POST",
+      "private": true,
+      "write": true
+    }
+  },
+  {
+    "name": "get_application",
+    "description": "Read the actual state of the session-owned application.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "applicationId": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "applicationId"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    },
+    "_http": {
+      "path": "/applications/{applicationId}",
+      "method": "GET",
+      "private": true,
+      "write": false
+    }
+  }
+]

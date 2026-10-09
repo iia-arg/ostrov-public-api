@@ -1,0 +1,3399 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Ostrov public API",
+    "version": "0.1.0",
+    "description": "Public retreat information and indicative quotes. A saved estimate or accepted application never implies confirmed availability. Guest sessions authorize only their own documents. Human links are confidential bearer capabilities."
+  },
+  "servers": [
+    {
+      "url": "https://ostrov.center/api/public/v1"
+    }
+  ],
+  "paths": {
+    "/center": {
+      "get": {
+        "operationId": "get_center",
+        "summary": "Public location and contact information.",
+        "responses": {
+          "200": {
+            "description": "Successful operation. A quote/application does not itself confirm a booking.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Writes disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found or not owned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version, idempotency or document conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit; Retry-After header applies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable or capacity reached; do not infer a zero price/free dates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/catalog": {
+      "get": {
+        "operationId": "get_catalog",
+        "summary": "Current tariff version, resources and rules. Do not cache prices as permanent knowledge.",
+        "responses": {
+          "200": {
+            "description": "Successful operation. A quote/application does not itself confirm a booking.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "apiVersion": {
+                      "const": "1"
+                    },
+                    "catalog": {
+                      "type": "object",
+                      "required": [
+                        "version",
+                        "bookingStart",
+                        "calendarYears",
+                        "seasonIntervals",
+                        "groupMinimumNights",
+                        "biggroupMinimumNights",
+                        "arrivalPricing",
+                        "resources",
+                        "bigGroups",
+                        "residents"
+                      ],
+                      "properties": {
+                        "version": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 1000000000
+                        },
+                        "bookingStart": {
+                          "type": "string",
+                          "format": "date",
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                        },
+                        "calendarYears": {
+                          "type": "array",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 2020,
+                            "maximum": 2200
+                          }
+                        },
+                        "seasonIntervals": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "start": {
+                                "type": "string",
+                                "format": "date",
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                              },
+                              "end": {
+                                "type": "string",
+                                "format": "date",
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                              },
+                              "season": {
+                                "enum": [
+                                  "low",
+                                  "medium",
+                                  "high"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "start",
+                              "end",
+                              "season"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "groupMinimumNights": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 366
+                        },
+                        "biggroupMinimumNights": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 366
+                        },
+                        "arrivalPricing": {
+                          "type": "boolean"
+                        },
+                        "resources": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Resource"
+                          }
+                        },
+                        "bigGroups": {
+                          "type": "object",
+                          "description": "Current all-inclusive thresholds, rates and team benefits. The server applies them."
+                        },
+                        "residents": {
+                          "type": "object",
+                          "description": "Current child-age and stay-discount policies. The server applies them."
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "currency": {
+                      "const": "RUB"
+                    },
+                    "generatedAt": {
+                      "type": "string",
+                      "maxLength": 100
+                    },
+                    "availabilityStatus": {
+                      "const": "requires_confirmation"
+                    },
+                    "ordinaryTeamBenefits": {
+                      "const": false
+                    }
+                  },
+                  "required": [
+                    "apiVersion",
+                    "catalog",
+                    "currency",
+                    "generatedAt",
+                    "availabilityStatus",
+                    "ordinaryTeamBenefits"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Writes disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found or not owned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version, idempotency or document conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit; Retry-After header applies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable or capacity reached; do not infer a zero price/free dates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/objects": {
+      "get": {
+        "operationId": "get_objects",
+        "summary": "Current public resource descriptions and availability rules; no guarantee of open places.",
+        "responses": {
+          "200": {
+            "description": "Successful operation. A quote/application does not itself confirm a booking.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "objects": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Resource"
+                      }
+                    },
+                    "availabilityStatus": {
+                      "const": "requires_confirmation"
+                    }
+                  },
+                  "required": [
+                    "objects",
+                    "availabilityStatus"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Writes disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found or not owned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version, idempotency or document conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit; Retry-After header applies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable or capacity reached; do not infer a zero price/free dates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/calendar": {
+      "get": {
+        "operationId": "get_calendar",
+        "summary": "Confirmed public activity; empty dates do not mean availability.",
+        "responses": {
+          "200": {
+            "description": "Successful operation. A quote/application does not itself confirm a booking.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Writes disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found or not owned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version, idempotency or document conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit; Retry-After header applies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable or capacity reached; do not infer a zero price/free dates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            }
+          }
+        ]
+      }
+    },
+    "/events": {
+      "get": {
+        "operationId": "get_events",
+        "summary": "Public programs and labeled demo data; contact the organizer to ask about joining.",
+        "responses": {
+          "200": {
+            "description": "Successful operation. A quote/application does not itself confirm a booking.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Writes disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found or not owned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version, idempotency or document conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit; Retry-After header applies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable or capacity reached; do not infer a zero price/free dates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/examples": {
+      "get": {
+        "operationId": "examples",
+        "summary": "Example dated plans; not reservations.",
+        "responses": {
+          "200": {
+            "description": "Successful operation. A quote/application does not itself confirm a booking.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Writes disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found or not owned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version, idempotency or document conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit; Retry-After header applies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable or capacity reached; do not infer a zero price/free dates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "operationId": "openapi",
+        "summary": "This contract.",
+        "responses": {
+          "200": {
+            "description": "Successful operation. A quote/application does not itself confirm a booking.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Writes disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found or not owned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version, idempotency or document conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit; Retry-After header applies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable or capacity reached; do not infer a zero price/free dates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/skill.md": {
+      "get": {
+        "operationId": "get_skill_document",
+        "summary": "Public skill documentation.",
+        "responses": {
+          "200": {
+            "description": "Successful operation. A quote/application does not itself confirm a booking.",
+            "content": {
+              "text/markdown": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Writes disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found or not owned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version, idempotency or document conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit; Retry-After header applies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable or capacity reached; do not infer a zero price/free dates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quickstart.md": {
+      "get": {
+        "operationId": "get_quickstart_document",
+        "summary": "Public quickstart documentation.",
+        "responses": {
+          "200": {
+            "description": "Successful operation. A quote/application does not itself confirm a booking.",
+            "content": {
+              "text/markdown": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Writes disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found or not owned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version, idempotency or document conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit; Retry-After header applies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable or capacity reached; do not infer a zero price/free dates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/access.md": {
+      "get": {
+        "operationId": "get_access_document",
+        "summary": "Public access documentation.",
+        "responses": {
+          "200": {
+            "description": "Successful operation. A quote/application does not itself confirm a booking.",
+            "content": {
+              "text/markdown": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Writes disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found or not owned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version, idempotency or document conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit; Retry-After header applies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable or capacity reached; do not infer a zero price/free dates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/readme.md": {
+      "get": {
+        "operationId": "get_readme_document",
+        "summary": "Public readme documentation.",
+        "responses": {
+          "200": {
+            "description": "Successful operation. A quote/application does not itself confirm a booking.",
+            "content": {
+              "text/markdown": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Writes disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found or not owned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version, idempotency or document conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit; Retry-After header applies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable or capacity reached; do not infer a zero price/free dates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quotes": {
+      "post": {
+        "operationId": "calculate_quote",
+        "summary": "Calculate without saving or contacting anyone. Check complete, warnings and availabilityStatus.",
+        "responses": {
+          "200": {
+            "description": "Successful operation. A quote/application does not itself confirm a booking.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "group",
+                        "biggroup",
+                        "resident"
+                      ]
+                    },
+                    "quote": {
+                      "$ref": "#/components/schemas/QuoteDetail"
+                    },
+                    "currency": {
+                      "const": "RUB"
+                    },
+                    "complete": {
+                      "type": "boolean"
+                    },
+                    "calculatedAt": {
+                      "type": "string",
+                      "maxLength": 100
+                    },
+                    "availabilityStatus": {
+                      "const": "requires_confirmation"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "quote",
+                    "currency",
+                    "complete",
+                    "calculatedAt",
+                    "availabilityStatus"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Writes disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found or not owned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version, idempotency or document conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit; Retry-After header applies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable or capacity reached; do not infer a zero price/free dates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/suggestions": {
+      "post": {
+        "operationId": "suggest_group",
+        "summary": "Suggest room/program selection for the ordinary group tariff; not an availability check.",
+        "responses": {
+          "200": {
+            "description": "Successful operation. A quote/application does not itself confirm a booking.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Writes disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found or not owned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version, idempotency or document conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit; Retry-After header applies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable or capacity reached; do not infer a zero price/free dates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "group"
+                  },
+                  "plan": {
+                    "$ref": "#/components/schemas/GroupPlan"
+                  },
+                  "catalogVersion": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000000000
+                  }
+                },
+                "required": [
+                  "kind",
+                  "plan"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sessions": {
+      "post": {
+        "operationId": "open_session",
+        "summary": "Create a 30-day capability session without signup.",
+        "responses": {
+          "201": {
+            "description": "Successful operation. A quote/application does not itself confirm a booking.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "maxLength": 43
+                    },
+                    "tokenType": {
+                      "const": "Bearer"
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "maxLength": 100
+                    },
+                    "scope": {
+                      "const": "own_estimates_and_applications"
+                    }
+                  },
+                  "required": [
+                    "token",
+                    "tokenType",
+                    "expiresAt",
+                    "scope"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Writes disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found or not owned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version, idempotency or document conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit; Retry-After header applies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable or capacity reached; do not infer a zero price/free dates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sessions/revoke": {
+      "post": {
+        "operationId": "revoke_session",
+        "summary": "Revoke own API access. Saved human documents remain.",
+        "responses": {
+          "204": {
+            "description": "Session revoked; no response body."
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Writes disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found or not owned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version, idempotency or document conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit; Retry-After header applies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable or capacity reached; do not infer a zero price/free dates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "GuestSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/estimates": {
+      "post": {
+        "operationId": "save_estimate",
+        "summary": "Save after explicit user request. Requires name/title. Confidential human link returned.",
+        "responses": {
+          "201": {
+            "description": "Successful operation. A quote/application does not itself confirm a booking.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "estimate": {
+                      "$ref": "#/components/schemas/Estimate"
+                    },
+                    "applicationId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "availabilityStatus": {
+                      "const": "requires_confirmation"
+                    },
+                    "linkAccess": {
+                      "type": "string",
+                      "maxLength": 500
+                    }
+                  },
+                  "required": [
+                    "estimate",
+                    "applicationId",
+                    "availabilityStatus",
+                    "linkAccess"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Writes disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found or not owned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version, idempotency or document conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit; Retry-After header applies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable or capacity reached; do not infer a zero price/free dates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "GuestSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveEstimateRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/estimates/{estimateId}": {
+      "get": {
+        "operationId": "get_estimate",
+        "summary": "Read only a document owned by this session.",
+        "responses": {
+          "200": {
+            "description": "Successful operation. A quote/application does not itself confirm a booking.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "estimate": {
+                      "$ref": "#/components/schemas/Estimate"
+                    },
+                    "applicationId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "availabilityStatus": {
+                      "const": "requires_confirmation"
+                    },
+                    "linkAccess": {
+                      "type": "string",
+                      "maxLength": 500
+                    }
+                  },
+                  "required": [
+                    "estimate",
+                    "applicationId",
+                    "availabilityStatus",
+                    "linkAccess"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Writes disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found or not owned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version, idempotency or document conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit; Retry-After header applies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable or capacity reached; do not infer a zero price/free dates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "GuestSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "estimateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{32}$"
+            }
+          }
+        ]
+      }
+    },
+    "/estimates/{estimateId}/edit": {
+      "post": {
+        "operationId": "edit_estimate",
+        "summary": "Edit an owned draft after explicit user request; stale versions conflict.",
+        "responses": {
+          "200": {
+            "description": "Successful operation. A quote/application does not itself confirm a booking.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "estimate": {
+                      "$ref": "#/components/schemas/Estimate"
+                    },
+                    "applicationId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "availabilityStatus": {
+                      "const": "requires_confirmation"
+                    },
+                    "linkAccess": {
+                      "type": "string",
+                      "maxLength": 500
+                    }
+                  },
+                  "required": [
+                    "estimate",
+                    "applicationId",
+                    "availabilityStatus",
+                    "linkAccess"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Writes disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found or not owned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version, idempotency or document conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit; Retry-After header applies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable or capacity reached; do not infer a zero price/free dates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "GuestSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditEstimateRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "estimateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{32}$"
+            }
+          }
+        ]
+      }
+    },
+    "/estimates/{estimateId}/applications": {
+      "post": {
+        "operationId": "submit_application",
+        "summary": "Submit only after user confirmation and contact consent. This does not confirm a booking.",
+        "responses": {
+          "201": {
+            "description": "Successful operation. A quote/application does not itself confirm a booking.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "application": {
+                      "$ref": "#/components/schemas/Application"
+                    }
+                  },
+                  "required": [
+                    "application"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Writes disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found or not owned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version, idempotency or document conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit; Retry-After header applies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable or capacity reached; do not infer a zero price/free dates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "GuestSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitApplicationRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "estimateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{32}$"
+            }
+          }
+        ]
+      }
+    },
+    "/applications/{applicationId}": {
+      "get": {
+        "operationId": "get_application",
+        "summary": "Read the actual state of the session-owned application.",
+        "responses": {
+          "200": {
+            "description": "Successful operation. A quote/application does not itself confirm a booking.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "application": {
+                      "$ref": "#/components/schemas/Application"
+                    }
+                  },
+                  "required": [
+                    "application"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Writes disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found or not owned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version, idempotency or document conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit; Retry-After header applies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable or capacity reached; do not infer a zero price/free dates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "GuestSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "GuestSession": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Token from POST sessions. Never send in a URL. Expires after 30 days; signup and private center keys are not required."
+      }
+    },
+    "schemas": {
+      "GroupPlan": {
+        "type": "object",
+        "properties": {
+          "arrival": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "departure": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "adults": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "youngChildrenAges": {
+            "type": "array",
+            "maxItems": 30,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "description": "Information only; does not change any guest count, accommodation, food or price."
+          },
+          "policyVersion": {
+            "type": "integer",
+            "const": 4
+          },
+          "teens": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Children eligible for the child discount (currently 6–12). Despite the field name, full-rate children (currently 13+) belong in adults. Check the live catalogue."
+          },
+          "team": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Adult organizers and team, separate from participants. Ordinary tariff charges the team fully; all-inclusive benefits are calculated by the server."
+          },
+          "youngChildren": {
+            "type": "integer",
+            "const": 0,
+            "description": "Legacy counter kept at zero; use youngChildrenAges for information."
+          },
+          "organizer": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "Display name; required and nonempty when saving."
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 150,
+            "description": "Retreat name; required and nonempty when saving."
+          },
+          "housing": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "resource": {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                "occupancy": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 3
+                },
+                "quantity": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 100
+                }
+              },
+              "required": [
+                "resource",
+                "occupancy",
+                "quantity"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 100
+          },
+          "activities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "resource": {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                "day": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 364
+                },
+                "slot": {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                "options": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "maxItems": 20
+                }
+              },
+              "required": [
+                "resource",
+                "day",
+                "slot",
+                "options"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 2000
+          },
+          "food": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "policyVersion",
+          "arrival",
+          "departure",
+          "adults",
+          "teens",
+          "team",
+          "housing",
+          "activities",
+          "food"
+        ],
+        "additionalProperties": false
+      },
+      "ResidentPlan": {
+        "type": "object",
+        "properties": {
+          "arrival": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "departure": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "adults": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+          },
+          "youngChildrenAges": {
+            "type": "array",
+            "maxItems": 30,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "description": "Information only; does not change any guest count, accommodation, food or price."
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "Required and nonempty when saving."
+          },
+          "children": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "type": "integer",
+              "minimum": 6,
+              "maximum": 17
+            },
+            "description": "Children counted in accommodation; current rules permit ages 6–17. Put younger ages in youngChildrenAges."
+          },
+          "housing": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 30,
+            "items": {
+              "type": "object",
+              "properties": {
+                "resource": {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                "occupancy": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 3
+                }
+              },
+              "required": [
+                "resource",
+                "occupancy"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "bathVisits": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "arrival",
+          "departure",
+          "adults",
+          "children",
+          "housing",
+          "bathVisits"
+        ],
+        "additionalProperties": false
+      },
+      "ContactProfile": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "format": "email"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "messengers": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "enum": [
+                    "telegram",
+                    "whatsapp",
+                    "max"
+                  ]
+                },
+                "username": {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                "userId": {
+                  "type": "string",
+                  "const": "",
+                  "description": "Typed contact is not authenticated identity; must be empty."
+                }
+              },
+              "required": [
+                "type",
+                "username",
+                "userId"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "name",
+          "phone",
+          "email",
+          "notes",
+          "messengers"
+        ],
+        "additionalProperties": false
+      },
+      "QuoteRequest": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "group",
+              "biggroup",
+              "resident"
+            ]
+          },
+          "plan": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/GroupPlan"
+              },
+              {
+                "$ref": "#/components/schemas/ResidentPlan"
+              }
+            ]
+          },
+          "catalogVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000000
+          }
+        },
+        "required": [
+          "kind",
+          "plan"
+        ],
+        "additionalProperties": false
+      },
+      "SaveEstimateRequest": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "group",
+              "biggroup",
+              "resident"
+            ]
+          },
+          "plan": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SavedGroupPlan"
+              },
+              {
+                "$ref": "#/components/schemas/SavedResidentPlan"
+              }
+            ]
+          },
+          "catalogVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000000
+          },
+          "requestKey": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._:-]{16,120}$",
+            "description": "Unique key for one intended write; reuse exactly after an uncertain result. Use a new key for changed input."
+          },
+          "userConfirmed": {
+            "type": "boolean",
+            "const": true,
+            "description": "Set only after the person explicitly requests this action."
+          }
+        },
+        "required": [
+          "kind",
+          "plan",
+          "catalogVersion",
+          "requestKey",
+          "userConfirmed"
+        ],
+        "additionalProperties": false
+      },
+      "EditEstimateRequest": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SavedGroupPlan"
+              },
+              {
+                "$ref": "#/components/schemas/SavedResidentPlan"
+              }
+            ]
+          },
+          "catalogVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000000
+          },
+          "documentVersion": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "requestKey": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._:-]{16,120}$",
+            "description": "Unique key for one intended write; reuse exactly after an uncertain result. Use a new key for changed input."
+          },
+          "userConfirmed": {
+            "type": "boolean",
+            "const": true,
+            "description": "Set only after the person explicitly requests this action."
+          }
+        },
+        "required": [
+          "plan",
+          "catalogVersion",
+          "documentVersion",
+          "requestKey",
+          "userConfirmed"
+        ],
+        "additionalProperties": false
+      },
+      "SubmitApplicationRequest": {
+        "type": "object",
+        "properties": {
+          "catalogVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000000
+          },
+          "documentVersion": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "contactProfile": {
+            "$ref": "#/components/schemas/ContactProfile"
+          },
+          "requestKey": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._:-]{16,120}$",
+            "description": "Unique key for one intended write; reuse exactly after an uncertain result. Use a new key for changed input."
+          },
+          "userConfirmed": {
+            "type": "boolean",
+            "const": true,
+            "description": "Set only after the person explicitly requests this action."
+          },
+          "consent": {
+            "type": "boolean",
+            "const": true,
+            "description": "Consent to submit contact information for handling this request."
+          }
+        },
+        "required": [
+          "catalogVersion",
+          "documentVersion",
+          "contactProfile",
+          "requestKey",
+          "userConfirmed",
+          "consent"
+        ],
+        "additionalProperties": false
+      },
+      "QuoteDetail": {
+        "type": "object",
+        "required": [
+          "version",
+          "total",
+          "lines"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000000
+          },
+          "total": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "RUB. Null means incomplete, never zero."
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string",
+                  "maxLength": 1000
+                },
+                "amount": {
+                  "type": "number"
+                },
+                "rate": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 2000
+            }
+          },
+          "compositionComplete": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true
+      },
+      "Estimate": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "url",
+          "documentVersion",
+          "catalogVersion",
+          "state",
+          "editable",
+          "plan",
+          "quote"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{32}$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "group",
+              "biggroup",
+              "resident"
+            ]
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Confidential bearer link: document, typed contact alias/comments and normal website actions. Do not publish."
+          },
+          "documentVersion": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "catalogVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000000
+          },
+          "state": {
+            "enum": [
+              "draft",
+              "in_application",
+              "snapshot"
+            ]
+          },
+          "editable": {
+            "type": "boolean"
+          },
+          "plan": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/GroupPlan"
+              },
+              {
+                "$ref": "#/components/schemas/ResidentPlan"
+              }
+            ]
+          },
+          "quote": {
+            "$ref": "#/components/schemas/QuoteDetail"
+          },
+          "updatedAt": {
+            "type": "string",
+            "maxLength": 100
+          }
+        },
+        "additionalProperties": false
+      },
+      "Application": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "estimateId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{32}$"
+          },
+          "status": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "reservationState": {
+            "enum": [
+              "none",
+              "negotiating",
+              "confirmed",
+              "cancelled"
+            ]
+          },
+          "bookingConfirmed": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "id",
+          "estimateId",
+          "status",
+          "reservationState",
+          "bookingConfirmed",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "message": {
+                "type": "string",
+                "maxLength": 2000
+              },
+              "retryAfter": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 86400
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      },
+      "SavedGroupPlan": {
+        "type": "object",
+        "properties": {
+          "arrival": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "departure": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "adults": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "youngChildrenAges": {
+            "type": "array",
+            "maxItems": 30,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "description": "Information only; does not change any guest count, accommodation, food or price."
+          },
+          "policyVersion": {
+            "type": "integer",
+            "const": 4
+          },
+          "teens": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Children eligible for the child discount (currently 6–12). Despite the field name, full-rate children (currently 13+) belong in adults. Check the live catalogue."
+          },
+          "team": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Adult organizers and team, separate from participants. Ordinary tariff charges the team fully; all-inclusive benefits are calculated by the server."
+          },
+          "youngChildren": {
+            "type": "integer",
+            "const": 0,
+            "description": "Legacy counter kept at zero; use youngChildrenAges for information."
+          },
+          "organizer": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "Display name; required and nonempty when saving.",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 150,
+            "description": "Retreat name; required and nonempty when saving.",
+            "minLength": 1
+          },
+          "housing": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "resource": {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                "occupancy": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 3
+                },
+                "quantity": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 100
+                }
+              },
+              "required": [
+                "resource",
+                "occupancy",
+                "quantity"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 100
+          },
+          "activities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "resource": {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                "day": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 364
+                },
+                "slot": {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                "options": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "maxItems": 20
+                }
+              },
+              "required": [
+                "resource",
+                "day",
+                "slot",
+                "options"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 2000
+          },
+          "food": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "policyVersion",
+          "arrival",
+          "departure",
+          "adults",
+          "teens",
+          "team",
+          "housing",
+          "activities",
+          "food",
+          "organizer",
+          "title"
+        ],
+        "additionalProperties": false
+      },
+      "SavedResidentPlan": {
+        "type": "object",
+        "properties": {
+          "arrival": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "departure": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "adults": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+          },
+          "youngChildrenAges": {
+            "type": "array",
+            "maxItems": 30,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "description": "Information only; does not change any guest count, accommodation, food or price."
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "Required and nonempty when saving.",
+            "minLength": 1
+          },
+          "children": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "type": "integer",
+              "minimum": 6,
+              "maximum": 17
+            },
+            "description": "Children counted in accommodation; current rules permit ages 6–17. Put younger ages in youngChildrenAges."
+          },
+          "housing": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 30,
+            "items": {
+              "type": "object",
+              "properties": {
+                "resource": {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                "occupancy": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 3
+                }
+              },
+              "required": [
+                "resource",
+                "occupancy"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "bathVisits": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "arrival",
+          "departure",
+          "adults",
+          "children",
+          "housing",
+          "bathVisits",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "Resource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "kind": {
+            "enum": [
+              "room",
+              "venue",
+              "food"
+            ]
+          },
+          "unit": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "rates": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "low": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "medium": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "high": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "low",
+                "medium",
+                "high"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "prices": {
+            "type": "object",
+            "properties": {
+              "low": {
+                "type": "number",
+                "minimum": 0
+              },
+              "medium": {
+                "type": "number",
+                "minimum": 0
+              },
+              "high": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "additionalProperties": false
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                "start": {
+                  "type": "string",
+                  "maxLength": 5
+                },
+                "end": {
+                  "type": "string",
+                  "maxLength": 5
+                }
+              },
+              "required": [
+                "id",
+                "start",
+                "end"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "gapMinutes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1440
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                "name": {
+                  "type": "string",
+                  "maxLength": 300
+                },
+                "prices": {
+                  "type": "object",
+                  "properties": {
+                    "low": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "medium": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "high": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "low",
+                    "medium",
+                    "high"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "prices"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "availabilityRule": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "annualPeriod": {
+                    "type": "object",
+                    "properties": {
+                      "start": {
+                        "type": "string",
+                        "maxLength": 5
+                      },
+                      "end": {
+                        "type": "string",
+                        "maxLength": 5
+                      }
+                    },
+                    "required": [
+                      "start",
+                      "end"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "annualPeriod"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "months": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 12
+                    }
+                  }
+                },
+                "required": [
+                  "months"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "unit",
+          "enabled",
+          "availabilityRule"
+        ],
+        "additionalProperties": false
+      },
+      "CalendarEvent": {
+        "type": "object",
+        "required": [
+          "start",
+          "end",
+          "title",
+          "kind"
+        ],
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "end": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "kind": {
+            "enum": [
+              "program",
+              "occupancy",
+              "demo"
+            ]
+          },
+          "organizer": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "eventUrl": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}

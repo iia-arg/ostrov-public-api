@@ -4,7 +4,7 @@
 
 **API:** https://ostrov.center/api/public/v1
 
-**Исходники:** https://github.com/iia-arg/ostrov-public-api · [Версия 0.1.2](https://github.com/iia-arg/ostrov-public-api/tree/v0.1.2)
+**Исходники:** https://github.com/iia-arg/ostrov-public-api · [Версия 0.1.3](https://github.com/iia-arg/ostrov-public-api/tree/v0.1.3)
 
 **Документация:** https://ostrov.center/developers · [OpenAPI 3.1](openapi.json) · [Скилл](https://ostrov.center/api/public/v1/skill.md) · [Первый сценарий](https://ostrov.center/api/public/v1/quickstart.md) · [Доступ и ограничения](https://ostrov.center/api/public/v1/access.md)
 
@@ -19,7 +19,7 @@ Python 3.10 или новее, внешних runtime-зависимостей �
 ```bash
 git clone https://github.com/iia-arg/ostrov-public-api.git
 cd ostrov-public-api
-git checkout v0.1.2
+git checkout v0.1.3
 ```
 
 Из корня комплекта:
@@ -74,4 +74,4 @@ python3 tools/generate_contract.py
 
 Генератор обновляет OpenAPI и MCP input schemas из одного определения. Изменения тарифов не требуют обновления клиента — читайте `/catalog` при расчёте. Поле `quote` может получить новые поясняющие поля в рамках v1; проверяйте известные обязательные признаки, а не фиксированный набор всех ключей.
 
-Версия комплекта: 0.1.2. Лицензия клиентского кода — MIT (текст LICENSE в скачанном комплекте). Это не лицензия на материалы, фотографии или персональные данные сайта. Об ошибке интеграции сообщите по публичным контактам `/center`, без токенов, частных ссылок и контактов гостей.
+Версия комплекта: 0.1.3. Лицензия клиентского кода — MIT (текст LICENSE в скачанном комплекте). Это не лицензия на материалы, фотографии или персональные данные сайта. Об ошибке интеграции сообщите по публичным контактам `/center`, без токенов, частных ссылок и контактов гостей.

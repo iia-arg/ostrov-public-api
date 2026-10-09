@@ -18,7 +18,7 @@ class Client:
  def _call(self,method,path,body=None,private=False):
   if not path.startswith('/')or path.startswith('//'):raise ValueError('Expected a relative API path')
   if private and not self.token:raise APIError(401,'SESSION_REQUIRED','Open a session or provide your existing token to access this document')
-  headers={'Content-Type':'application/json','Accept':'application/json','User-Agent':'ostrov-public-api/0.1.2'}
+  headers={'Content-Type':'application/json','Accept':'application/json','User-Agent':'ostrov-public-api/0.1.3'}
   if private:headers['Authorization']='Bearer '+self.token
   raw=json.dumps(body,ensure_ascii=False,allow_nan=False).encode()if body is not None else None
   if raw is not None and len(raw)>65536:raise ValueError('API request exceeds 65536 bytes')

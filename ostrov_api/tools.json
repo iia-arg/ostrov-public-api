@@ -570,7 +570,7 @@
   },
   {
     "name": "save_estimate",
-    "description": "Save after explicit user request. Requires name/title. Confidential human link returned.",
+    "description": "Save after explicit user request. Group/biggroup require organizer and retreat title; resident requires guest name. Confidential human link returned.",
     "inputSchema": {
       "type": "object",
       "properties": {

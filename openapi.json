@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Ostrov public API",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "description": "Public retreat information and indicative quotes. A saved estimate or accepted application never implies confirmed availability. Guest sessions authorize only their own documents. Human links are confidential bearer capabilities."
   },
   "servers": [
@@ -2259,6 +2259,86 @@
       }
     },
     "schemas": {
+      "GroupQuoteLine": {
+        "type": "object",
+        "required": [
+          "label",
+          "amount"
+        ],
+        "properties": {
+          "label": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "amount": {
+            "type": "number",
+            "description": "RUB; negative values are deductions already applied by the server."
+          },
+          "kind": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "rate": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": true
+      },
+      "ResidentQuoteDay": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "season": {
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          },
+          "housing": {
+            "type": "number"
+          },
+          "food": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "date",
+          "housing",
+          "food"
+        ],
+        "additionalProperties": false
+      },
+      "ChildRules": {
+        "type": "object",
+        "properties": {
+          "childFreeUnder": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 18
+          },
+          "childDiscountUnder": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 18
+          },
+          "childDiscount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "childFreeUnder",
+          "childDiscountUnder",
+          "childDiscount"
+        ],
+        "additionalProperties": false
+      },
       "GroupPlan": {
         "type": "object",
         "properties": {
@@ -2711,11 +2791,20 @@
       "QuoteDetail": {
         "type": "object",
         "required": [
+          "kind",
           "version",
           "total",
           "lines"
         ],
         "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "group",
+              "biggroup",
+              "resident"
+            ]
+          },
           "version": {
             "type": "integer",
             "minimum": 1,
@@ -2726,25 +2815,20 @@
               "number",
               "null"
             ],
-            "description": "RUB. Null means incomplete, never zero."
+            "description": "Authoritative server total in RUB after all applied discounts and extras. Never replace it with a sum of resident daily lines. Null means incomplete, never zero."
           },
           "lines": {
             "type": "array",
+            "description": "group/biggroup: labeled signed amounts. resident: daily housing/food after child terms but before resident/duration discounts and paid baths; these are not the final total.",
             "items": {
-              "type": "object",
-              "properties": {
-                "label": {
-                  "type": "string",
-                  "maxLength": 1000
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/GroupQuoteLine"
                 },
-                "amount": {
-                  "type": "number"
-                },
-                "rate": {
-                  "type": "number"
+                {
+                  "$ref": "#/components/schemas/ResidentQuoteDay"
                 }
-              },
-              "additionalProperties": true
+              ]
             }
           },
           "warnings": {
@@ -2756,9 +2840,49 @@
           },
           "compositionComplete": {
             "type": "boolean"
+          },
+          "childSettings": {
+            "$ref": "#/components/schemas/ChildRules"
+          },
+          "grossHousingTotal": {
+            "type": "number",
+            "description": "Housing before child and other discounts."
+          },
+          "grossFoodTotal": {
+            "type": "number",
+            "description": "Food before child and other discounts."
+          },
+          "childDiscountAmount": {
+            "type": "number",
+            "description": "Applied child discount. Already included in resident housingTotal, foodTotal and subtotal."
+          },
+          "housingTotal": {
+            "type": "number",
+            "description": "Resident housing after child terms, before resident/duration discounts."
+          },
+          "foodTotal": {
+            "type": "number",
+            "description": "Resident food after child terms, before resident/duration discounts."
+          },
+          "subtotal": {
+            "type": "number",
+            "description": "Resident housing plus food after child terms, before resident/duration discounts."
+          },
+          "residentDiscountAmount": {
+            "type": "number",
+            "description": "Applied resident discount; already included in total."
+          },
+          "durationDiscountAmount": {
+            "type": "number",
+            "description": "Applied duration discount; already included in total."
+          },
+          "bathTotal": {
+            "type": "number",
+            "description": "Resident paid bath charge; already included in total."
           }
         },
-        "additionalProperties": true
+        "additionalProperties": true,
+        "description": "Use kind to explain the breakdown and total as the server result. Public group quotes omit legacy teamSettings; childSettings contains only child-age/discount rules, never resident activities or duration policy."
       },
       "Estimate": {
         "type": "object",

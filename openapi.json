@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Ostrov public API",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "Public retreat information and indicative quotes. A saved estimate or accepted application never implies confirmed availability. Guest sessions authorize only their own documents. Human links are confidential bearer capabilities."
   },
   "servers": [
